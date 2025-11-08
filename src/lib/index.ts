@@ -1,1 +1,11 @@
-// place files you want to import through the `$lib` alias in this folder.
+// main library exports
+
+// api
+export * from './api/mal';
+
+// cache
+export * from './cache';
+
+// types
+export type * from './types/game';
+

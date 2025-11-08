@@ -18,7 +18,7 @@
 
 ### Technical Stack
 - **Frontend**: SvelteKit 2.x + TypeScript (SPA)
-- **Data Source**: AniList GraphQL API (client-side calls)
+- **Data Source**: Jikan API (MyAnimeList) via jikan-api.js wrapper (client-side calls)
 - **Backend**: Static files only (no server logic)
 - **Hosting**: Static hosting (Vercel/Netlify/Cloudflare Pages)
 
@@ -26,39 +26,38 @@
 - **Minimal backend**: No server routes, no database, just static JSON files
 - **Client-side everything**: All API calls, validation, and game logic runs in the browser
 - **Pre-generated dailies**: Daily puzzles are curated and pre-generated, committed to repository
-- **Direct API integration**: Frontend calls AniList GraphQL API directly
+- **Direct API integration**: Frontend calls Jikan API (MyAnimeList) directly using jikan-api.js wrapper
 
 ---
 
 ## Phase 1: Core Data Layer & API Integration
 
-### 1.1 AniList GraphQL Client Setup
+### 1.1 Jikan API Client Setup
 
-**Objective**: Establish reliable communication with the AniList API to fetch anime and seiyuu data.
+**Objective**: Establish reliable communication with the Jikan API (MyAnimeList) to fetch anime and seiyuu data.
 
 **Implementation Details**:
-- Create GraphQL client utility in `src/lib/api/anilist.ts`
-- Implement query functions for:
-  - **Fetching anime by ID with full voice actor roster**: Returns anime title, cover image, and complete list of seiyuu who worked on it
-  - **Fetching staff (seiyuu) by ID with complete anime roles**: Returns seiyuu name, image, and complete list of anime they worked on
+- Install and configure jikan4.js wrapper in `src/lib/api/mal.ts`
+- Implement functions for:
+  - **Fetching anime by ID with voice actor roster**: Returns anime title, cover image, and list of Japanese voice actors (main/supporting roles only)
+  - **Fetching people (seiyuu) by ID with anime roles**: Returns seiyuu name, image, and list of anime voice acting roles (main/supporting only)
   - **Searching anime by name**: For search/autocomplete (used in freeplay puzzle generation)
-  - **Searching seiyuu by name**: For search/autocomplete within loaded seiyuu lists
-- Add proper TypeScript types for all API responses in `src/lib/types/anilist.ts`
+  - **Searching people by name**: For search/autocomplete within loaded seiyuu lists
+- Add proper TypeScript types for all API responses in `src/lib/types/mal.ts`
 - Implement error handling with user-friendly messages
-- Add retry logic with exponential backoff for failed requests
-- Implement client-side rate limiting (track requests, show warning if approaching limits)
 - Add caching mechanism using browser localStorage to reduce redundant API calls
+- Filter to only include Main and Supporting character roles (exclude Background roles)
 
-**Why This Matters**: The entire game revolves around anime-seiyuu relationships. Since we're calling AniList directly from the client, this layer needs to be robust, handle errors gracefully, and cache aggressively to minimize API calls.
+**Why This Matters**: The entire game revolves around anime-seiyuu relationships. The jikan-api.js wrapper provides a clean TypeScript interface to MyAnimeList data with built-in error handling. Caching aggressively minimizes API calls and improves performance.
 
 **API Call Pattern**:
 ```
-Game start → Fetch anime details (1 call)
-User picks seiyuu → Fetch seiyuu details (1 call)
-User picks anime → Fetch anime details (1 call)
+Game start → Fetch anime details + characters (2 calls)
+User picks seiyuu → Fetch person details + voice roles (2 calls)  
+User picks anime → Fetch anime details + characters (2 calls)
 ...repeat
 ```
-Typical game: 4-8 API calls total (well under rate limits).
+Typical game: 8-12 API calls total. With caching, repeated plays use 0-2 calls.
 
 ### 1.2 Data Models & Type Definitions
 
@@ -66,8 +65,9 @@ Typical game: 4-8 API calls total (well under rate limits).
 
 **Implementation Details**:
 - Define TypeScript interfaces in `src/lib/types/game.ts`:
-  - `Anime`: id, title (romaji, english, native), coverImage, voiceActors array
-  - `Seiyuu`: id, name (full, native), image, animeRoles array
+  - `Anime`: id, title (string), coverImage, type, year, voiceActors array
+  - `Seiyuu`: id, name (string), image, animeRoles array, characterName, characterRole ('Main' | 'Supporting')
+  - `AnimeRole`: anime, characterName, characterRole
   - `GameLink`: represents one step in the chain (type: 'anime' | 'seiyuu', entity: Anime | Seiyuu)
   - `GameChain`: array of GameLinks representing the player's current path
   - `GameState`: complete game state including chain, target, moves, mode, completion status
@@ -193,10 +193,10 @@ Typical game: 4-8 API calls total (well under rate limits).
   }
   ```
 - Criteria for inclusion:
-  - Popular/well-known anime (AniList popularity score > 70)
+  - Popular/well-known anime (MAL popularity/members > threshold)
   - Good seiyuu coverage (at least 10 credited voice actors)
   - Well-connected (seiyuu who worked on multiple other popular anime)
-  - Data completeness (has cover image, correct romanization, etc.)
+  - Data completeness (has cover image, correct titles, etc.)
 - Initial pool size: ~200-300 anime
 - Categories: popular shonen, popular seinen, classic anime, recent hits
 
@@ -216,11 +216,11 @@ Typical game: 4-8 API calls total (well under rate limits).
   - **Auto-generation algorithm**:
     - Select random start anime from pool
     - Select random target anime from pool (different from start)
-    - Ensure at least one connection path exists (BFS search via AniList API)
+    - Ensure at least one connection path exists (BFS search via Jikan API)
     - Vary difficulty throughout the week (easier on Monday, harder on Friday)
     - Avoid repeating same anime within 30 days
   - **Validation**:
-    - Call AniList API to verify connection path exists
+    - Call Jikan API to verify connection path exists
     - Calculate estimated difficulty (number of possible paths, seiyuu overlap)
     - Show path preview
   - Output: Update `static/data/daily-puzzles.json`
@@ -498,7 +498,7 @@ Typical game: 4-8 API calls total (well under rate limits).
     - Show SelectionList for next step
   - If new puzzle:
     - Initialize new game
-    - Fetch start anime details from AniList
+    - Fetch start anime details from Jikan API
     - Show GameBoard with start anime
     - Fetch and show seiyuu list
   - Display puzzle number and date prominently
@@ -564,7 +564,7 @@ Typical game: 4-8 API calls total (well under rate limits).
     - Hamburger menu on mobile
     - Full nav bar on desktop
   - Footer:
-    - Credits (AniList attribution)
+    - Credits (MyAnimeList/Jikan API attribution)
     - GitHub link
     - Version number
   - Global components:
@@ -720,8 +720,8 @@ Typical game: 4-8 API calls total (well under rate limits).
 
 **Implementation Details**:
 - Image handling:
-  - Use AniList's image CDN URLs (already optimized)
-  - Request appropriate sizes from AniList (medium vs large)
+  - Use Jikan/MAL image CDN URLs (already optimized)
+  - Request appropriate sizes from Jikan API (large vs medium)
   - Lazy load images in selection lists (load as user scrolls)
   - Eager load images for current chain
   - Responsive images:
@@ -1015,7 +1015,7 @@ Typical game: 4-8 API calls total (well under rate limits).
 - Generate new daily puzzles quarterly
 - Update puzzle pool with new popular anime
 - Update dependencies monthly
-- Monitor AniList API changes
+- Monitor Jikan API changes
 - Fix bugs as reported
 - Performance optimization based on real-world data
 - Accessibility improvements
@@ -1077,7 +1077,7 @@ Typical game: 4-8 API calls total (well under rate limits).
 
 ### Technical Success
 - <2s initial load time
-- <500ms API response time (from AniList)
+- <500ms API response time (from Jikan)
 - <1% error rate
 - Works offline with cached data
 - Supports all modern browsers
@@ -1088,15 +1088,16 @@ Typical game: 4-8 API calls total (well under rate limits).
 
 ### Tools & Libraries
 - **SvelteKit**: https://kit.svelte.dev/
-- **AniList API**: https://docs.anilist.co/
-- **GraphQL**: https://graphql.org/
+- **Jikan API**: https://jikan.moe/
+- **jikan4.js**: https://github.com/rizzzigit/jikan4.js
+- **MyAnimeList**: https://myanimelist.net/
 - **Vite**: https://vitejs.dev/
 - **TypeScript**: https://www.typescriptlang.org/
 
 ### Design Inspiration
 - Wordle: Clean, minimal daily puzzle format
 - Connections: Visual grid selection
-- Anime games: AniList interface patterns
+- Anime games: MyAnimeList interface patterns
 
 ### Similar Projects
 - Six Degrees of Wikipedia
@@ -1112,7 +1113,7 @@ seiyuu/
 ├── src/
 │   ├── lib/
 │   │   ├── api/
-│   │   │   └── anilist.ts              # AniList GraphQL client
+│   │   │   └── mal.ts                  # Jikan API client
 │   │   ├── cache/
 │   │   │   └── index.ts                # Caching utilities
 │   │   ├── components/
@@ -1136,7 +1137,7 @@ seiyuu/
 │   │   │   ├── gameState.ts            # Game state store
 │   │   │   └── userProgress.ts         # Stats/progress store
 │   │   └── types/
-│   │       ├── anilist.ts              # AniList API types
+│   │       ├── mal.ts                  # MAL API types
 │   │       └── game.ts                 # Game data types
 │   ├── routes/
 │   │   ├── +layout.svelte              # App layout/nav
@@ -1165,7 +1166,7 @@ seiyuu/
 
 - All dates in UTC to avoid timezone issues
 - Puzzle numbers start from project launch date
-- AniList API rate limit: 90 requests/minute (plenty for our use case)
+- Jikan API has rate limiting (handled by jikan4.js wrapper)
 - Cache aggressively to minimize API calls
 - No user accounts needed initially (localStorage is sufficient)
 - Focus on mobile-first design (many anime fans on mobile)
