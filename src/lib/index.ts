@@ -1,11 +1,5 @@
 // main library exports
 
-// api
-export * from './api/mal';
-
-// cache
-export * from './cache';
-
-// types
+export * from './utils/mal';
 export type * from './types/game';
 
