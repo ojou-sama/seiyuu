@@ -112,7 +112,7 @@ export async function fetchAnime(id: number): Promise<Anime> {
 		coverImage: getImageUrl(anime.images),
 		type: anime.type,
 		year: anime.year ?? undefined,
-		voiceActors: Array.from(seiyuuMap.values())
+		staff: Array.from(seiyuuMap.values())
 	};
 
 	return result;
