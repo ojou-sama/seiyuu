@@ -38,7 +38,8 @@ export type ModeRegistry = {
 
 export interface Anime {
 	id: number,
-	title: string,
+    title: string,
+	titles: Title[],
 	coverImage: string,
 	type: string,
     season: string,
@@ -52,4 +53,9 @@ export interface Staff {
 	image: string,
 	characterName?: string, // character they played in previous anime
 	characterRole?: 'Main' | 'Supporting', // role type
+}
+
+export interface Title {
+    type: string,
+    title: string,
 }

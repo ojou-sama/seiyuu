@@ -38,22 +38,37 @@
         }, 300);
     }
 
+    function clearSearchBar() {
+        query = '';
+        results = [];
+    }
+
     async function handleSelect(anime: Anime) {
         onSelect?.(await fetchAnime(anime.id));
+        clearSearchBar();
     }
 </script>
 
-<input 
-    bind:value={query}
-    oninput={handleInput}
-    placeholder="Search anime..."
->
-{#if results.length}
-    <ul>
-        {#each results as animeResult}
-            <li>
-                <button onclick={() => handleSelect(animeResult)}>{animeResult.title}</button>
-            </li>
-        {/each}
-    </ul>
-{/if}
+<div class="searchbar-container">
+    <input 
+        bind:value={query}
+        oninput={handleInput}
+        placeholder="Search anime..."
+        style="width: 100%;"
+    >
+    {#if results.length}
+        <ul>
+            {#each results as animeResult}
+                <li>
+                    <button onclick={() => handleSelect(animeResult)}>{animeResult.title}</button>
+                </li>
+            {/each}
+        </ul>
+    {/if}
+</div>
+
+<style>
+    .searchbar-container {
+        width: 100%;
+    }
+</style>

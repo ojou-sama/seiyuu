@@ -9,24 +9,38 @@
 </script>
 
 <div class="chain-element">
-    <h3>{round.anime.title}</h3>
-    {#if round.anime.coverImage}
-        <img src={round.anime.coverImage} alt={round.anime.title} />
-    {/if}
+    <p>Round {round.number}</p>
+    <div class="chain-card">
+        {#if round.anime.coverImage}
+            <img src={round.anime.coverImage} alt={round.anime.title} />
+        {/if}
+        <div>
+            <h3>{round.anime.title}</h3>
+        </div>
+    </div>
 </div>
 
 <style>
     .chain-element {
-        padding: 1rem;
+        width: min(520px, 100%);
+    }
+    
+    .chain-card {
+        padding: 1em;
         border: 1px solid #ccc;
         border-radius: 8px;
-        background: white;
+        display: flex;
+        flex-direction: row;
+        gap: 1em;
     }
 
-    .chain-element img {
-        max-width: 200px;
+    .chain-card img {
+        max-height: 160px;
         height: auto;
-        border-radius: 4px;
+    }
+
+    h3 {
+        margin: 0;
     }
 </style>
 

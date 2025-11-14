@@ -27,25 +27,6 @@ function getImageUrl(images: any): string {
 }
 
 /**
- * helper to get preferred title from jikan title object
- * prefers english title, falls back to default
- */
-function getPreferredTitle(titles: any): string {
-	if (!titles) return '';
-	if (typeof titles === 'string') return titles;
-	
-	// handle array of title objects
-	if (Array.isArray(titles)) {
-		const english = titles.find((t: any) => t.type === 'English');
-		const defaultTitle = titles.find((t: any) => t.type === 'Default');
-		return english?.title || defaultTitle?.title || titles[0]?.title || '';
-	}
-	
-	// handle object format
-	return titles.english || titles.default || '';
-}
-
-/**
  * helper to get person name as string
  * handles both string and object formats
  */
@@ -108,7 +89,8 @@ export async function fetchAnime(id: number): Promise<Anime> {
 
 	const result: Anime = {
 		id: anime.mal_id,
-		title: getPreferredTitle(anime.titles),
+		title: anime.title,
+		titles: anime.titles,
 		coverImage: getImageUrl(anime.images),
 		type: anime.type,
 		year: anime.year,
@@ -156,7 +138,6 @@ export async function fetchStaff(id: number): Promise<Staff> {
 export async function searchAnime(search: string): Promise<Anime[]> {
 	const url = new URL(`${API_BASE}/anime`);
 	url.searchParams.set('q', search);
-	url.searchParams.set('sort', 'desc');
 	url.searchParams.set('limit', '10');
 
 	const response = await fetch(url.toString());
@@ -169,7 +150,8 @@ export async function searchAnime(search: string): Promise<Anime[]> {
 
 	return results.map((anime: any) => ({
 		id: anime.mal_id,
-		title: getPreferredTitle(anime.titles),
+		title: anime.title,
+		titles: anime.titles,
 		coverImage: getImageUrl(anime.images),
 		type: anime.type,
 		year: anime.year,

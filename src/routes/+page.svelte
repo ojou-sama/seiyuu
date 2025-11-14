@@ -7,3 +7,11 @@
 <div class="container">
     <Game mode={MODES['genreHunt']}></Game>
 </div>
+
+<style>
+	.container {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+</style>
