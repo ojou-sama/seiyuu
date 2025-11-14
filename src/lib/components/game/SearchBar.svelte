@@ -1,6 +1,7 @@
 <script lang="ts">
-    import type { Anime } from "$lib/types/game";
-    import { fetchAnime, searchAnime } from "$lib/utils/mal";
+    import type { Anime } from '$lib/types/game';
+    import { fetchAnime, searchAnime } from '$lib/utils/mal';
+    import { Search } from 'lucide-svelte';
 
     type Props = {
         onSelect: (anime: Anime) => void;
@@ -8,67 +9,232 @@
 
     const { onSelect }: Props = $props();
 
-    let query: string = $state('');
+    let inputValue = $state('');
     let results: Anime[] = $state([]);
-    let isLoading: boolean = false;
+    let isLoading = $state(false);
+    let hasError = $state(false);
+    let isOpen = $state(false);
+    let highlightedIndex = $state(-1);
     let debounceTimeout: ReturnType<typeof setTimeout> | undefined;
 
-    function handleInput() {
+    // Debounced search
+    $effect(() => {
+        const value = inputValue;
+
         if (debounceTimeout) {
             clearTimeout(debounceTimeout);
         }
 
-        if (query.length < 3) {
+        if (value.length < 3) {
             results = [];
             isLoading = false;
-            debounceTimeout = undefined;
+            hasError = false;
+            isOpen = false;
             return;
         }
 
+        isLoading = true;
+        hasError = false;
+        isOpen = true;
+
         debounceTimeout = setTimeout(async () => {
-            const searchTerm = query;
-            isLoading = true;
-
-            const found = await searchAnime(searchTerm);
-
-            if (searchTerm === query) {
-                results = found;
-                isLoading = false;
+            try {
+                const found = await searchAnime(value);
+                if (value === inputValue) {
+                    results = found;
+                    isLoading = false;
+                    highlightedIndex = -1;
+                }
+            } catch (error) {
+                console.error('Search failed:', error);
+                if (value === inputValue) {
+                    hasError = true;
+                    isLoading = false;
+                    results = [];
+                }
             }
         }, 300);
-    }
-
-    function clearSearchBar() {
-        query = '';
-        results = [];
-    }
+    });
 
     async function handleSelect(anime: Anime) {
-        onSelect?.(await fetchAnime(anime.id));
-        clearSearchBar();
+        try {
+            const fullAnime = await fetchAnime(anime.id);
+            onSelect?.(fullAnime);
+            inputValue = '';
+            results = [];
+            isOpen = false;
+            highlightedIndex = -1;
+        } catch (error) {
+            console.error('Failed to fetch anime:', error);
+        }
+    }
+
+    function handleKeydown(e: KeyboardEvent) {
+        if (!isOpen || results.length === 0) return;
+
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                highlightedIndex = Math.min(highlightedIndex + 1, results.length - 1);
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                highlightedIndex = Math.max(highlightedIndex - 1, -1);
+                break;
+            case 'Enter':
+                e.preventDefault();
+                if (highlightedIndex >= 0 && results[highlightedIndex]) {
+                    handleSelect(results[highlightedIndex]);
+                }
+                break;
+            case 'Escape':
+                e.preventDefault();
+                isOpen = false;
+                highlightedIndex = -1;
+                break;
+        }
+    }
+
+    function handleClickOutside(e: MouseEvent) {
+        const target = e.target as HTMLElement;
+        if (!target.closest('.searchbar')) {
+            isOpen = false;
+            highlightedIndex = -1;
+        }
+    }
+
+    function getEnglishTitle(anime: Anime): string | undefined {
+        return anime.titles?.find((t) => t.type === 'English')?.title;
     }
 </script>
 
-<div class="searchbar-container">
-    <input 
-        bind:value={query}
-        oninput={handleInput}
-        placeholder="Search anime..."
-        style="width: 100%;"
-    >
-    {#if results.length}
-        <ul>
-            {#each results as animeResult}
-                <li>
-                    <button onclick={() => handleSelect(animeResult)}>{animeResult.title}</button>
-                </li>
-            {/each}
-        </ul>
+<svelte:window onclick={handleClickOutside} />
+
+<div class="searchbar">
+    <div class="input-wrapper">
+        <Search class="search-icon" size={20} />
+        <input
+            bind:value={inputValue}
+            onkeydown={handleKeydown}
+            placeholder="Search anime..."
+            autocomplete="off"
+        />
+    </div>
+    {#if isOpen}
+        <div class="menu">
+            {#if isLoading}
+                <div class="message">Loading...</div>
+            {:else if hasError}
+                <div class="message error">
+                    Rate limit reached. Please wait a moment and try again.
+                </div>
+            {:else if inputValue.length < 3}
+                <div class="message">Type at least 3 characters to search</div>
+            {:else if results.length === 0}
+                <div class="message">No results found</div>
+            {:else}
+                {#each results as anime, index (anime.id)}
+                    <button
+                        type="button"
+                        class="item"
+                        class:highlighted={index === highlightedIndex}
+                        onclick={() => handleSelect(anime)}
+                        onmouseenter={() => (highlightedIndex = index)}
+                    >
+                        <div class="title">{anime.title}</div>
+                        {#if getEnglishTitle(anime)}
+                            <div class="subtitle">{getEnglishTitle(anime)}</div>
+                        {/if}
+                    </button>
+                {/each}
+            {/if}
+        </div>
     {/if}
 </div>
 
 <style>
-    .searchbar-container {
+    .searchbar {
+        position: relative;
         width: 100%;
+    }
+
+    .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .input-wrapper :global(.search-icon) {
+        position: absolute;
+        left: 10px;
+        color: #999;
+        pointer-events: none;
+    }
+
+    input {
+        width: 100%;
+        padding: 8px 8px 8px 36px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+
+    input:focus {
+        outline: none;
+        border-color: #666;
+    }
+
+    .menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        max-height: 300px;
+        overflow-y: auto;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        z-index: 10;
+    }
+
+    .message {
+        padding: 16px;
+        text-align: center;
+        color: #999;
+    }
+
+    .message.error {
+        color: #d32f2f;
+    }
+
+    .item {
+        width: 100%;
+        padding: 12px;
+        cursor: pointer;
+        border: none;
+        border-bottom: 1px solid #f0f0f0;
+        background: white;
+        text-align: left;
+        font-size: 1rem;
+    }
+
+    .item:last-child {
+        border-bottom: none;
+    }
+
+    .item.highlighted {
+        background: #f5f5f5;
+    }
+
+    .title {
+        font-weight: 500;
+    }
+
+    .subtitle {
+        font-size: 0.875rem;
+        color: #666;
+        margin-top: 2px;
     }
 </style>
