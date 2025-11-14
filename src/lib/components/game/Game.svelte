@@ -53,8 +53,11 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		justify-content: center;
 		width: 800px;
+        padding: 24px;
+        margin-top: 16px;
+        min-height: 100vh;
+        background-color: rgb(255, 248, 239);
 	}
 
 	.game-actions {
