@@ -14,7 +14,7 @@
     {#each rounds.slice().reverse() as round, index}
         <ChainElement {round} />
         {#if index < rounds.length - 1}
-            <ChainLink />
+            <ChainLink {round} />
         {/if}
     {/each}
 </div>

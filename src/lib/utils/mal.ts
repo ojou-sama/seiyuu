@@ -1,7 +1,7 @@
 // myanimelist api client using direct jikan api calls
 // docs: https://docs.api.jikan.moe/
 
-import type { Anime, Seiyuu, AnimeRole } from '$lib/types/game';
+import type { Anime, Staff } from '$lib/types/game';
 
 // base url for jikan api v4
 const API_BASE = 'https://api.jikan.moe/v4';
@@ -80,7 +80,7 @@ export async function fetchAnime(id: number): Promise<Anime> {
 		throw new Error(`anime ${id} not found`);
 	}
 
-	const seiyuuMap = new Map<number, Seiyuu>();
+	const seiyuuMap = new Map<number, Staff>();
 
 	// collect japanese voice actors from main and supporting characters only
 	for (const char of characters) {
@@ -111,67 +111,39 @@ export async function fetchAnime(id: number): Promise<Anime> {
 		title: getPreferredTitle(anime.titles),
 		coverImage: getImageUrl(anime.images),
 		type: anime.type,
-		year: anime.year ?? undefined,
+		year: anime.year,
+		season: anime.season,
 		staff: Array.from(seiyuuMap.values())
 	};
+
+	console.log('result', result);
 
 	return result;
 }
 
 /**
- * fetch seiyuu by id with anime roles
- * fetches person details and voice roles, filters to main/supporting roles
+ * fetch seiyuu by id
+ * fetches person details
  */
-export async function fetchSeiyuu(id: number): Promise<Seiyuu> {
-	// fetch person and voice actor roles
-	const [personRes, voiceRolesRes] = await Promise.all([
-		fetch(`${API_BASE}/people/${id}`),
-		fetch(`${API_BASE}/people/${id}/voices`)
-	]);
+export async function fetchStaff(id: number): Promise<Staff> {
+	// fetch person details
+	const personRes = await fetch(`${API_BASE}/people/${id}`);
 
-	if (!personRes.ok || !voiceRolesRes.ok) {
+	if (!personRes.ok) {
 		throw new Error(`person ${id} not found`);
 	}
 
 	const personData = await personRes.json();
-	const voiceRolesData = await voiceRolesRes.json();
-
 	const person = personData.data;
-	const voiceRoles = voiceRolesData.data || [];
 
 	if (!person) {
 		throw new Error(`person ${id} not found`);
 	}
 
-	const animeMap = new Map<number, AnimeRole>();
-
-	// collect anime from voice roles (main and supporting only)
-	for (const role of voiceRoles) {
-		// only include main and supporting roles
-		if (role.role !== 'Main' && role.role !== 'Supporting') {
-			continue;
-		}
-
-		if (role.anime && !animeMap.has(role.anime.mal_id)) {
-			animeMap.set(role.anime.mal_id, {
-				anime: {
-					id: role.anime.mal_id,
-					title: getPreferredTitle(role.anime.titles),
-					coverImage: getImageUrl(role.anime.images),
-					type: undefined,
-					year: undefined
-				},
-				characterName: role.character?.name || '',
-				characterRole: role.role
-			});
-		}
-	}
-
-	const result: Seiyuu = {
+	const result: Staff = {
 		id: person.mal_id,
 		name: getPersonName(person.name),
 		image: getImageUrl(person.images),
-		animeRoles: Array.from(animeMap.values())
 	};
 
 	return result;
@@ -184,7 +156,6 @@ export async function fetchSeiyuu(id: number): Promise<Seiyuu> {
 export async function searchAnime(search: string): Promise<Anime[]> {
 	const url = new URL(`${API_BASE}/anime`);
 	url.searchParams.set('q', search);
-	url.searchParams.set('order_by', 'members');
 	url.searchParams.set('sort', 'desc');
 	url.searchParams.set('limit', '10');
 
@@ -201,32 +172,7 @@ export async function searchAnime(search: string): Promise<Anime[]> {
 		title: getPreferredTitle(anime.titles),
 		coverImage: getImageUrl(anime.images),
 		type: anime.type,
-		year: anime.year ?? undefined
-	}));
-}
-
-/**
- * search people by name
- * returns top 10 results ordered by favorites
- */
-export async function searchStaff(search: string): Promise<Seiyuu[]> {
-	const url = new URL(`${API_BASE}/people`);
-	url.searchParams.set('q', search);
-	url.searchParams.set('order_by', 'favorites');
-	url.searchParams.set('sort', 'desc');
-	url.searchParams.set('limit', '10');
-
-	const response = await fetch(url.toString());
-	if (!response.ok) {
-		return [];
-	}
-
-	const data = await response.json();
-	const results = data.data || [];
-
-	return results.map((person: any) => ({
-		id: person.mal_id,
-		name: getPersonName(person.name),
-		image: getImageUrl(person.images)
+		year: anime.year,
+		season: anime.season
 	}));
 }

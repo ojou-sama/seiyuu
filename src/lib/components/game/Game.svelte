@@ -16,34 +16,26 @@
         isOver: false,
         mode,
         rounds: [],
-        staffUsage: []
+        overallStaffUsage: new Map<number, number>()
     })
 
     onMount(async () => {
         const anime = await fetchAnime(1128);
-        addRound(anime);
+        const result = mode.tryAddRound(details, anime);
+        if (!result.success) {
+            console.error('Failed to add initial anime:', result.error);
+        }
     });
 
     function handleSelect(selected: Anime) {
-        if (mode.validateLink(details, selected)) {
-            addRound(selected);
-            if (mode.isVictory(details)) {
-                // show victory
+        const result = mode.tryAddRound(details, selected);
+        if (result.success) {
+            if (mode.isGameOver(details)) {
+                alert('Game is over! You win!');
             }
         } else {
-            // show error
+            alert(result.error);
         }
-    }
-
-    function addRound(anime: Anime) {
-        const roundNumber = details.rounds.length + 1;
-        const newRound = {
-            number: roundNumber,
-            anime,
-            staffLinks: []
-        };
-
-        details.rounds = [...details.rounds, newRound];
     }
 </script>
 

@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Anime } from "$lib/types/game";
-    import { searchAnime } from "$lib/utils/mal";
+    import { fetchAnime, searchAnime } from "$lib/utils/mal";
 
     type Props = {
         onSelect: (anime: Anime) => void;
@@ -38,8 +38,8 @@
         }, 300);
     }
 
-    function handleSelect(anime: Anime) {
-        onSelect?.(anime);
+    async function handleSelect(anime: Anime) {
+        onSelect?.(await fetchAnime(anime.id));
     }
 </script>
 
