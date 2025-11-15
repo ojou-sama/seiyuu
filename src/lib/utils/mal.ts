@@ -163,3 +163,36 @@ export async function searchAnime(search: string): Promise<Anime[]> {
 		season: anime.season
 	}));
 }
+
+/** fetch random anime from top N anime
+ */
+export async function fetchRandomTopAnime(topCount: number): Promise<Anime> {
+    const url = new URL(`${API_BASE}/top/anime`);
+    url.searchParams.set('filter', 'bypopularity');
+    url.searchParams.set('page', Math.ceil(topCount / 25).toString());
+
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+        throw new Error(`Failed to fetch top ${topCount} anime`);
+    }
+
+    const data = await response.json();
+    const results = data.data || [];
+
+    if (results.length === 0) {
+        throw new Error(`No anime found in top ${topCount}`);
+    }
+
+    // select a random anime from the results
+    const selectedAnime = results[Math.floor(Math.random() * results.length)];
+
+    return {
+        id: selectedAnime.mal_id,
+        title: selectedAnime.title,
+        titles: selectedAnime.titles,
+        coverImage: getImageUrl(selectedAnime.images),
+        type: selectedAnime.type,
+        year: selectedAnime.year,
+        season: selectedAnime.season
+    };
+}

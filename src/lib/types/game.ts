@@ -6,14 +6,16 @@ export interface GameDetails {
     isOver: boolean,
     mode: GameMode,
     rounds: GameRound[],
-    overallStaffUsage: Map<number, number>
+    overallStaffUsage: Map<number, number>,
+    settings: GameSettings // player-configured settings for this game
 }
 
 export interface GameRound {
     number: number,
     anime: Anime,
     staffUsed: Staff[],
-    roundStaffUsage: Map<number, number>
+    roundStaffUsage: Map<number, number>,
+    timestamp: number // when this round was added
 }
 
 // game mode types
@@ -22,9 +24,16 @@ export type TryAddRoundResult =
     | { success: true; round: GameRound }
     | { success: false; error: string };
 
+export interface GameSettings {
+    maxStaffUsage?: number, // max staff usage allowed (undefined = unlimited)
+    timePerTurn?: number // time limit per turn in seconds (undefined = no limit)
+}
+
 export interface GameMode {
     name: string,
     description: string,
+    defaultSettings: GameSettings, // default/recommended settings for this mode
+    startGame: (gameDetails: GameDetails) => TryAddRoundResult | Promise<TryAddRoundResult>, // initialize the game
     tryAddRound: (gameDetails: GameDetails, newAnime: Anime) => TryAddRoundResult,
     isGameOver: (gameDetails: GameDetails) => boolean,
     ui?: Record<string, unknown>,

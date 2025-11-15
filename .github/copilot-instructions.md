@@ -84,3 +84,8 @@ Jikan API has rate limits. SearchBar includes 300ms debounce; avoid calling `fet
 - Game modes are pure functions - test `tryAddRound()` with mock `GameDetails` and `Anime` objects
 - No backend - all game state lives in component `$state`
 - Initial anime (ID 1128) is hardcoded in `Game.svelte` - consider making configurable
+
+# Code Style
+- Follow SvelteKit and Svelte 5 best practices
+- Simple, readable code with comments for complex logic
+- Comments should be in all lowercase and use brief language
