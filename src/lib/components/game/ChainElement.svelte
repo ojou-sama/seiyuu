@@ -35,7 +35,7 @@
     }
 
     .chain-card img {
-        max-height: 160px;
+        max-height: 140px;
         height: auto;
     }
 

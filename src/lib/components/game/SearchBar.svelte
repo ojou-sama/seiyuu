@@ -17,6 +17,9 @@
     let highlightedIndex = $state(-1);
     let debounceTimeout: ReturnType<typeof setTimeout> | undefined;
 
+    // container ref for scoped queries/scrolling
+    let containerEl = $state<HTMLElement | null>(null);
+
     // Debounced search
     $effect(() => {
         const value = inputValue;
@@ -25,7 +28,7 @@
             clearTimeout(debounceTimeout);
         }
 
-        if (value.length < 3) {
+        if (value.length <= 0) {
             results = [];
             isLoading = false;
             hasError = false;
@@ -56,6 +59,21 @@
         }, 300);
     });
 
+    // Scroll highlighted item into view when index changes
+    $effect(() => {
+        const idx = highlightedIndex;
+        const container = containerEl;
+        if (!container || idx < 0) return;
+
+        const items = container.querySelectorAll<HTMLButtonElement>('.menu .item');
+        const el = items[idx];
+        if (el) {
+            requestAnimationFrame(() =>
+                el.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+            );
+        }
+    });
+
     async function handleSelect(anime: Anime) {
         try {
             const fullAnime = await fetchAnime(anime.id);
@@ -69,6 +87,10 @@
         }
     }
 
+    $effect(() => {
+        console.log('highlightedIndex changed:', highlightedIndex);
+    });
+
     function handleKeydown(e: KeyboardEvent) {
         if (!isOpen || results.length === 0) return;
 
@@ -79,7 +101,7 @@
                 break;
             case 'ArrowUp':
                 e.preventDefault();
-                highlightedIndex = Math.max(highlightedIndex - 1, -1);
+                highlightedIndex = Math.max(highlightedIndex - 1, 0);
                 break;
             case 'Enter':
                 e.preventDefault();
@@ -110,7 +132,7 @@
 
 <svelte:window onclick={handleClickOutside} />
 
-<div class="searchbar">
+<div class="searchbar" bind:this={containerEl}>
     <div class="input-wrapper">
         <Search class="search-icon" size={20} />
         <input
@@ -128,8 +150,6 @@
                 <div class="message error">
                     Rate limit reached. Please wait a moment and try again.
                 </div>
-            {:else if inputValue.length < 3}
-                <div class="message">Type at least 3 characters to search</div>
             {:else if results.length === 0}
                 <div class="message">No results found</div>
             {:else}
