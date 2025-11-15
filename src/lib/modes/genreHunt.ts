@@ -73,7 +73,7 @@ const tryAddRound = (details: GameDetails, newAnime: Anime): TryAddRoundResult =
     }
     
     const lastAnime = lastRound.anime;
-    
+
     // Check if staff information is available
     if (!lastAnime.staff || !newAnime.staff) {
         return { success: false, error: `"${newAnime.title}" cannot be linked - no staff information available.` };

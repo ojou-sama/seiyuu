@@ -87,10 +87,6 @@
         }
     }
 
-    $effect(() => {
-        console.log('highlightedIndex changed:', highlightedIndex);
-    });
-
     function handleKeydown(e: KeyboardEvent) {
         if (!isOpen || results.length === 0) return;
 

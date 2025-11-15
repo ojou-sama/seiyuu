@@ -36,6 +36,36 @@ function getPersonName(name: any): string {
 	return name.name || '';
 }
 
+function extractSeiyuu(characters: any[]): Staff[] {
+    const seiyuuMap = new Map<number, Staff>();
+
+    // collect japanese voice actors from main and supporting characters only
+    for (const char of characters) {
+        // only include main and supporting roles
+        if (char.role !== 'Main' && char.role !== 'Supporting') {
+            continue;
+        }
+
+        // get japanese voice actors
+        const voiceActors = char.voice_actors || [];
+        for (const va of voiceActors) {
+            if (va.language === 'Japanese' && va.person) {
+                if (!seiyuuMap.has(va.person.mal_id)) {
+                    seiyuuMap.set(va.person.mal_id, {
+                        id: va.person.mal_id,
+                        name: getPersonName(va.person.name),
+                        image: getImageUrl(va.person.images),
+                        characterName: char.character?.name || '',
+                        characterRole: char.role
+                    });
+                }
+            }
+        }
+    }
+
+    return Array.from(seiyuuMap.values());
+}
+
 /**
  * fetch anime by id with voice actors
  * fetches anime details and characters, filters to main/supporting japanese voice actors
@@ -61,32 +91,6 @@ export async function fetchAnime(id: number): Promise<Anime> {
 		throw new Error(`anime ${id} not found`);
 	}
 
-	const seiyuuMap = new Map<number, Staff>();
-
-	// collect japanese voice actors from main and supporting characters only
-	for (const char of characters) {
-		// only include main and supporting roles
-		if (char.role !== 'Main' && char.role !== 'Supporting') {
-			continue;
-		}
-
-		// get japanese voice actors
-		const voiceActors = char.voice_actors || [];
-		for (const va of voiceActors) {
-			if (va.language === 'Japanese' && va.person) {
-				if (!seiyuuMap.has(va.person.mal_id)) {
-					seiyuuMap.set(va.person.mal_id, {
-						id: va.person.mal_id,
-						name: getPersonName(va.person.name),
-						image: getImageUrl(va.person.images),
-						characterName: char.character?.name || '',
-						characterRole: char.role
-					});
-				}
-			}
-		}
-	}
-
 	const result: Anime = {
 		id: anime.mal_id,
 		title: anime.title,
@@ -95,10 +99,8 @@ export async function fetchAnime(id: number): Promise<Anime> {
 		type: anime.type,
 		year: anime.year,
 		season: anime.season,
-		staff: Array.from(seiyuuMap.values())
+		staff: extractSeiyuu(characters)
 	};
-
-	console.log('result', result);
 
 	return result;
 }
@@ -184,15 +186,19 @@ export async function fetchRandomTopAnime(topCount: number): Promise<Anime> {
     }
 
     // select a random anime from the results
-    const selectedAnime = results[Math.floor(Math.random() * results.length)];
+    const anime = results[Math.floor(Math.random() * results.length)];
+    const characters = await fetch(`${API_BASE}/anime/${anime.mal_id}/characters`)
+        .then(res => res.json())
+        .then(data => data.data || []);
 
     return {
-        id: selectedAnime.mal_id,
-        title: selectedAnime.title,
-        titles: selectedAnime.titles,
-        coverImage: getImageUrl(selectedAnime.images),
-        type: selectedAnime.type,
-        year: selectedAnime.year,
-        season: selectedAnime.season
+		id: anime.mal_id,
+		title: anime.title,
+		titles: anime.titles,
+		coverImage: getImageUrl(anime.images),
+		type: anime.type,
+		year: anime.year,
+		season: anime.season,
+		staff: extractSeiyuu(characters)
     };
 }
