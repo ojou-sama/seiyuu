@@ -148,7 +148,12 @@ export async function searchAnime(search: string): Promise<Anime[]> {
 	const data = await response.json();
 	const results = data.data || [];
 
-	return results.map((anime: any) => ({
+    // filter results to not include types: CM, PV, and Music
+    const filteredResults = results.filter((anime: any) => {
+        return anime.type !== 'CM' && anime.type !== 'PV' && anime.type !== 'Music';
+    });
+
+	return filteredResults.map((anime: any) => ({
 		id: anime.mal_id,
 		title: anime.title,
 		titles: anime.titles,
