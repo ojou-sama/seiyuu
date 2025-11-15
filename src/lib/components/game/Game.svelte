@@ -3,7 +3,6 @@
 	import ChainDisplay from './ChainDisplay.svelte';
 	import TurnTimer from './TurnTimer.svelte';
 	import type { Anime, GameDetails, GameMode } from '$lib/types/game';
-	import { fetchAnime } from '$lib/utils/mal';
 	import { onMount } from 'svelte';
 
 	type Props = {
@@ -12,19 +11,23 @@
 
 	const { mode }: Props = $props();
 
+	let isInitialized = $state(false);
+
 	let details = $state<GameDetails>({
 		startTime: Date.now(),
 		isOver: false,
 		mode,
 		rounds: [],
 		overallStaffUsage: new Map<number, number>(),
-		settings: mode.defaultSettings // initialize with mode's default settings
+		settings: mode.defaultSettings
 	});
 
 	onMount(async () => {
 		const result = await mode.startGame(details);
 		if (!result.success) {
 			console.error('Failed to start game:', result.error);
+		} else {
+			isInitialized = true;
 		}
 	});
 
@@ -53,16 +56,20 @@
 	const lastRoundTime = $derived(
 		details.rounds.length > 0 ? details.rounds[details.rounds.length - 1].timestamp : details.startTime
 	);
+
+	// only show timer when game is active (initialized and not over)
+	const isGameActive = $derived(isInitialized && !details.isOver);
 </script>
 
 <div class="game-container">
 	<div class="game-actions">
-		<SearchBar onSelect={handleSelect} />
+		<SearchBar onSelect={handleSelect} disabled={!isGameActive} />
 		{#if details.settings.timePerTurn}
 			<TurnTimer
 				timeLimit={details.settings.timePerTurn}
 				startTime={lastRoundTime}
 				onTimeUp={handleTimeUp}
+				disabled={!isGameActive}
 			/>
 		{/if}
 	</div>

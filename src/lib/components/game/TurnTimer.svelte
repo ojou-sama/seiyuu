@@ -5,9 +5,10 @@
 		timeLimit: number; // in seconds
 		startTime: number; // timestamp when turn started
 		onTimeUp: () => void;
+		disabled?: boolean;
 	};
 
-	const { timeLimit, startTime, onTimeUp }: Props = $props();
+	const { timeLimit, startTime, onTimeUp, disabled = false }: Props = $props();
 
 	let timeRemaining = $state(timeLimit);
 	let intervalId: ReturnType<typeof setInterval> | undefined;
@@ -43,8 +44,7 @@
 	}
 </script>
 
-<div class="turn-timer" class:warning={timeRemaining <= 10}>
-	<div class="timer-label">Time remaining:</div>
+<div class="turn-timer" class:warning={timeRemaining <= 10} class:disabled>
 	<div class="timer-value">{formatTime(timeRemaining)}</div>
 </div>
 
@@ -59,10 +59,6 @@
 		font-size: 0.9rem;
 	}
 
-	.timer-label {
-		color: #666;
-	}
-
 	.timer-value {
 		font-weight: 700;
 		font-size: 1.2rem;
@@ -75,5 +71,10 @@
 
 	.turn-timer.warning .timer-value {
 		color: #d32f2f;
+	}
+
+	.turn-timer.disabled {
+		opacity: 0.5;
+		pointer-events: none;
 	}
 </style>

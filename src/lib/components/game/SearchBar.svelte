@@ -5,9 +5,10 @@
 
     type Props = {
         onSelect: (anime: Anime) => void;
+        disabled?: boolean;
     };
 
-    const { onSelect }: Props = $props();
+    const { onSelect, disabled = false }: Props = $props();
 
     let inputValue = $state('');
     let results: Anime[] = $state([]);
@@ -26,6 +27,14 @@
 
         if (debounceTimeout) {
             clearTimeout(debounceTimeout);
+        }
+
+        if (disabled) {
+            results = [];
+            isLoading = false;
+            hasError = false;
+            isOpen = false;
+            return;
         }
 
         if (value.length <= 0) {
@@ -136,6 +145,7 @@
             onkeydown={handleKeydown}
             placeholder="Search anime..."
             autocomplete="off"
+            disabled={disabled}
         />
     </div>
     {#if isOpen}
@@ -149,7 +159,7 @@
             {:else if results.length === 0}
                 <div class="message">No results found</div>
             {:else}
-                {#each results as anime, index (anime.id)}
+                {#each results as anime, index (`${anime.id}-${index}`)}
                     <button
                         type="button"
                         class="item"

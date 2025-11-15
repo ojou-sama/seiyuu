@@ -150,9 +150,11 @@ export async function searchAnime(search: string): Promise<Anime[]> {
 	const data = await response.json();
 	const results = data.data || [];
 
-    // filter results to not include types: CM, PV, and Music
     const filteredResults = results.filter((anime: any) => {
-        return anime.type !== 'CM' && anime.type !== 'PV' && anime.type !== 'Music';
+        return anime.type !== 'CM' 
+            && anime.type !== 'PV' 
+            && anime.type !== 'Music' 
+            && anime.status !== 'Not yet aired';
     });
 
 	return filteredResults.map((anime: any) => ({
