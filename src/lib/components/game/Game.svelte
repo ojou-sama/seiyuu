@@ -1,8 +1,8 @@
 <script lang="ts">
-	import SearchBar from './SearchBar.svelte';
-	import ChainDisplay from './ChainDisplay.svelte';
 	import TurnTimer from './TurnTimer.svelte';
-	import type { Anime, GameSession } from '$lib/types/game';
+	import ChainDisplay from './ChainDisplay.svelte';
+	import type { GameSession } from '$lib/types/game';
+	import { searchAnime, fetchAnime } from '$lib/api/anime';
 	import { onMount } from 'svelte';
 
 	type Props = {
@@ -14,6 +14,10 @@
 	let session = $state<GameSession>(initialSession);
 	let isInitialized = $state(false);
 
+	// get components from mode
+	const SearchComponent = session.mode.searchComponent;
+	const ChainElementComponent = session.mode.chainElementComponent;
+
 	onMount(async () => {
 		const result = await session.mode.startGame(session.details, session.settings);
 		if (!result.success) {
@@ -23,7 +27,7 @@
 		}
 	});
 
-	function handleSelect(selected: Anime) {
+	function handleSelect(selected: any) {
 		const result = session.mode.tryAddRound(session.details, selected, session.settings);
 		if (result.success) {
 			if (session.mode.isGameOver(session.details)) {
@@ -55,7 +59,12 @@
 
 <div class="game-container">
 	<div class="game-actions">
-		<SearchBar onSelect={handleSelect} disabled={!isGameActive} />
+		<SearchComponent 
+			onSelect={handleSelect} 
+			disabled={!isGameActive}
+			searchFunction={searchAnime}
+			fetchItemFunction={fetchAnime}
+		/>
 		{#if session.settings.timePerTurn}
 			<TurnTimer
 				timeLimit={session.settings.timePerTurn}
@@ -66,7 +75,11 @@
 		{/if}
 	</div>
 	<div class="game-content">
-		<ChainDisplay rounds={session.details.rounds} />
+		<ChainDisplay rounds={session.details.rounds}>
+			{#snippet chainElement(round)}
+				<ChainElementComponent {round} />
+			{/snippet}
+		</ChainDisplay>
 	</div>
 </div>
 

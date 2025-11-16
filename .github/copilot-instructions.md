@@ -7,8 +7,9 @@ This is a web-based anime chain game built with **SvelteKit 2** and **Svelte 5**
 
 ### Game Mode System
 Game modes are the core abstraction. Each mode in `src/lib/modes/` exports a `GameMode` object implementing:
-- `tryAddRound(gameDetails, newAnime)` - Validates if an anime can be added to the chain, returns `{ success: true, round }` or `{ success: false, error }`
+- `tryAddRound(gameDetails, newItem, settings)` - Validates if an item can be added to the chain, returns `{ success: true, round }` or `{ success: false, error }`
 - `isGameOver(gameDetails)` - Determines win/lose conditions
+- `startGame(gameDetails, settings)` - Initializes the game (can be async), returns `TryAddRoundResult`
 - Modes are registered in `modeRegistry.ts` and selected at game initialization
 
 **Example**: `genreHunt.ts` enforces:
@@ -17,16 +18,24 @@ Game modes are the core abstraction. Each mode in `src/lib/modes/` exports a `Ga
 - Voice actors can't be reused more than 3 times across the game
 - Game ends after 10 rounds
 
-### Data Flow
-1. **Search** (`SearchBar.svelte`) → calls `searchAnime()` (debounced 300ms, min 3 chars)
-2. **Selection** → fetches full anime details via `fetchAnime(id)` to get voice actor list
-3. **Validation** → mode's `tryAddRound()` checks if anime can be added
-4. **Display** → `ChainDisplay.svelte` renders rounds in **reverse order** (newest first)
+**Generic Architecture**: Game components are mode-agnostic. `Game.svelte` uses Svelte 5 snippets for UI composition, allowing future modes for movies, books, music, etc.
 
-### MAL API Integration (`src/lib/utils/mal.ts`)
-Uses Jikan v4 API (unofficial MAL API). Key functions:
-- `fetchAnime(id)` - Fetches anime + characters, filters to Main/Supporting Japanese VAs only
+### Data Flow
+1. **Search** (passed via snippet) → searches using API client functions
+2. **Selection** → fetches full item details to get complete data
+3. **Validation** → mode's `tryAddRound()` checks if item can be added
+4. **Display** → `ChainDisplay.svelte` renders rounds using snippet-provided chain elements in **reverse order** (newest first)
+
+### API Integration (`src/routes/api/anime/` + `src/lib/api/anime.ts`)
+Internal SvelteKit API endpoints proxy to Jikan v4 (unofficial MAL API):
+- `POST /api/anime/search` - Search anime by query
+- `GET /api/anime/[id]` - Fetch anime + characters with Japanese VAs
+- `GET /api/anime/random?topCount=N` - Get random anime from top N
+
+Client wrapper at `src/lib/api/anime.ts` provides typed functions:
 - `searchAnime(query)` - Returns top 10 results
+- `fetchAnime(id)` - Fetches anime + characters, filters to Main/Supporting Japanese VAs only
+- `fetchRandomTopAnime(topCount)` - Gets random anime from top N by popularity
 - Voice actors are deduplicated per anime (same VA voicing multiple characters = 1 entry)
 
 **Important**: Only Main and Supporting character roles are included; background characters are filtered out.
@@ -46,9 +55,11 @@ Uses Jikan v4 API (unofficial MAL API). Key functions:
 - Use discriminated unions for results: `TryAddRoundResult = { success: true, ... } | { success: false, error }`
 
 ### File Organization
-- Game logic: `src/lib/modes/` - pure functions, no UI
-- UI components: `src/lib/components/game/` - game-specific components
-- Shared utilities: `src/lib/utils/` - API clients, helpers
+- Game logic: `src/lib/modes/` - pure functions defining game rules
+- Mode-specific UI: `src/lib/components/anime/` - anime-specific search and chain element components
+- Generic game UI: `src/lib/components/game/` - reusable game wrapper components (Game, ChainDisplay, TurnTimer)
+- Shared utilities: `src/lib/utils/` - helpers
+- API layer: `src/lib/api/` - client wrappers, `src/routes/api/` - server endpoints
 - Path alias `$lib` resolves to `src/lib/`
 
 ## Key Commands
@@ -64,11 +75,24 @@ npm run format       # Auto-format with Prettier
 ## Common Patterns
 
 ### Adding a New Game Mode
-1. Create `src/lib/modes/newMode.ts` exporting a `GameMode` object
-2. Implement `tryAddRound()` with validation logic returning `TryAddRoundResult`
-3. Implement `isGameOver()` for end conditions
-4. Register in `modeRegistry.ts`: `export const MODES = { ..., newMode }`
-5. Mode is immediately selectable in game initialization
+1. Create `src/lib/components/yourMode/` directory for UI components
+2. Create search and chain element components
+3. Create `src/lib/modes/yourMode.ts` exporting a `GameMode<TItem>` object:
+   - Implement `tryAddRound()` with validation logic returning `TryAddRoundResult`
+   - Implement `isGameOver()` for end conditions
+   - Implement `startGame()` for initialization (can be async)
+4. Register in `modeRegistry.ts`: `export const MODES = { ..., yourMode }`
+5. In your page component, pass UI via snippets:
+   ```svelte
+   <Game {session}>
+     {#snippet search({ onSelect, disabled })}
+       <YourSearchBar {onSelect} {disabled} ... />
+     {/snippet}
+     {#snippet chainElement(round)}
+       <YourChainElement {round} />
+     {/snippet}
+   </Game>
+   ```
 
 ### Modifying Game State
 Always update `GameDetails` immutably in `tryAddRound()`:
@@ -77,13 +101,18 @@ details.rounds = [...details.rounds, newRound];  // ✓ Creates new array
 details.overallStaffUsage = new Map(updated);    // ✓ Creates new Map
 ```
 
-### API Rate Limiting
-Jikan API has rate limits. SearchBar includes 300ms debounce; avoid calling `fetchAnime()` unnecessarily (e.g., cache results, fetch only on final selection).
+### API Architecture
+- Client code calls `src/lib/api/anime.ts` functions
+- These make fetch requests to `/api/anime/*` SvelteKit endpoints
+- Endpoints proxy to external APIs (currently Jikan)
+- **Future**: Replace endpoint implementations with database queries, add caching, WebSocket support
+- API functions are passed to UI components via props
 
 ## Testing Considerations
-- Game modes are pure functions - test `tryAddRound()` with mock `GameDetails` and `Anime` objects
-- No backend - all game state lives in component `$state`
-- Initial anime (ID 1128) is hardcoded in `Game.svelte` - consider making configurable
+- Game modes are pure functions - test `tryAddRound()` with mock `GameDetails` and item objects
+- No backend - all game state lives in component `$state` (managed via `GameSession`)
+- Initial anime fetched via `startGame()` which is async
+- Generic components (`ChainDisplay`, `Game`) work with any mode via Svelte 5 snippets
 
 # Code Style
 - Follow SvelteKit and Svelte 5 best practices

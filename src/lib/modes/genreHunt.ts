@@ -1,5 +1,7 @@
 import type { Anime, GameDetails, GameMode, GameRound, GameSettings, Staff, TryAddRoundResult } from '$lib/types/game';
-import { fetchRandomTopAnime } from '$lib/utils/mal';
+import { fetchRandomTopAnime } from '$lib/api/anime';
+import AnimeSearchBar from '$lib/components/anime/AnimeSearchBar.svelte';
+import AnimeChainElement from '$lib/components/anime/AnimeChainElement.svelte';
 
 const NAME = 'Genre Hunt';
 const DESCRIPTION = 'Play five anime of a given genre.';
@@ -156,6 +158,7 @@ export const genreHunt: GameMode = {
     tryAddRound: tryAddRound,
     startGame: startGame,
     isGameOver: isGameOver,
-    ui: {}
+    searchComponent: AnimeSearchBar,
+    chainElementComponent: AnimeChainElement,
 };
 

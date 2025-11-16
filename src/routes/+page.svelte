@@ -17,7 +17,7 @@
 </script>
 
 <div class="container">
-    <Game {session}></Game>
+	<Game {session} />
 </div>
 
 <style>

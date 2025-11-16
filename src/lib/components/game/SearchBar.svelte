@@ -1,6 +1,6 @@
 <script lang="ts">
     import type { Anime } from '$lib/types/game';
-    import { fetchAnime, searchAnime } from '$lib/utils/mal';
+    import { fetchAnime, searchAnime } from '$lib/api/anime';
     import { Search } from 'lucide-svelte';
 
     type Props = {
