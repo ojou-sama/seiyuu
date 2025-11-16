@@ -1,10 +1,10 @@
 <script lang="ts">
 	import Game from "$lib/components/game/Game.svelte";
 	import { MODES } from "$lib/modes/modeRegistry";
-	import type { GameSession } from "$lib/types/game";
+	import type { Anime, GameSession } from "$lib/types/game";
 
 	const mode = MODES['genreHunt'];
-	const session: GameSession = {
+	const session: GameSession<Anime> = {
 		mode,
 		settings: mode.defaultSettings,
 		details: {
@@ -16,14 +16,6 @@
 	};
 </script>
 
-<div class="container">
+<div class="flex justify-center items-center">
 	<Game {session} />
 </div>
-
-<style>
-	.container {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-	}
-</style>

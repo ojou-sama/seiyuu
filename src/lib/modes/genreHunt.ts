@@ -148,7 +148,7 @@ const isGameOver = (details: GameDetails): boolean => {
     return details.rounds.length >= 10;
 }
 
-export const genreHunt: GameMode = {
+export const genreHunt: GameMode<Anime> = {
     name: NAME,
     description: DESCRIPTION,
     defaultSettings: {

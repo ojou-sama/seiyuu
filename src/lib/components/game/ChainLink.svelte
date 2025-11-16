@@ -8,64 +8,20 @@
     const { round }: Props = $props();
 </script>
 
-<div class="chain-link">
-    <div class="link-line"></div>
+<div class="flex flex-col items-center justify-center py-2 gap-2">
+    <div class="w-0.5 h-10 bg-gray-800"></div>
     {#if round.staffUsed && round.staffUsed.length > 0}
-        <div class="staff-info">
+        <div class="flex flex-wrap gap-2 justify-center max-w-[400px]">
             {#each round.staffUsed as staff}
-                <div class="staff-item">
-                    <span class="staff-name">{staff.name}</span>
-                    <span class="usage-count">
+                <div class="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded text-sm">
+                    <span class="font-medium">{staff.name}</span>
+                    <span class="text-gray-600 text-xs">
                         ({round.roundStaffUsage.get(staff.id) || 0}x)
                     </span>
                 </div>
             {/each}
         </div>
     {/if}
-    <div class="link-line"></div>
+    <div class="w-0.5 h-10 bg-gray-800"></div>
 </div>
-
-<style>
-    .chain-link {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 0.5rem 0;
-        gap: 0.5rem;
-    }
-
-    .link-line {
-        width: 2px;
-        height: 40px;
-        background: #333;
-    }
-
-    .staff-info {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        justify-content: center;
-        max-width: 400px;
-    }
-
-    .staff-item {
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
-        padding: 0.25rem 0.5rem;
-        background: #f0f0f0;
-        border-radius: 4px;
-        font-size: 0.875rem;
-    }
-
-    .staff-name {
-        font-weight: 500;
-    }
-
-    .usage-count {
-        color: #666;
-        font-size: 0.75rem;
-    }
-</style>
 
