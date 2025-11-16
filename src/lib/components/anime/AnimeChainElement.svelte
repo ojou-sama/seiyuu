@@ -2,9 +2,9 @@
 	import ChainElement from '$lib/components/game/ChainElement.svelte';
 	import type { GameRound } from '$lib/types/game';
 
-	type Props = {
+	interface Props {
 		round: GameRound;
-	};
+	}
 
 	const { round }: Props = $props();
 </script>

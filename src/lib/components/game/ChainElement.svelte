@@ -2,10 +2,10 @@
 	import type { GameRound } from "$lib/types/game";
 	import type { Snippet } from 'svelte';
 
-	type Props = {
+	interface Props {
 		round: GameRound;
-		content: Snippet; // mode-specific content
-	};
+		content: Snippet;
+	}
 
 	const { round, content }: Props = $props();
 </script>

@@ -1,14 +1,16 @@
-<script lang="ts" generics="TItem">
+<script lang="ts" generics="TItem extends { id: number | string }">
 	import { Search } from 'lucide-svelte';
 	import type { Snippet } from 'svelte';
 
-	type Props = {
+	type SelectHandler = (item: TItem, id: number | string) => Promise<void>;
+
+	interface Props {
 		onSelect: (item: TItem) => void;
 		disabled?: boolean;
 		searchFunction: (query: string) => Promise<TItem[]>;
 		fetchItemFunction: (id: number | string) => Promise<TItem>;
-		resultItem: Snippet<[TItem, number, boolean, (item: TItem, id: number | string) => Promise<void>]>; // item, index, isHighlighted, handleSelect
-	};
+		resultItem: Snippet<[TItem, number, boolean, SelectHandler]>;
+	}
 
 	const { onSelect, disabled = false, searchFunction, fetchItemFunction, resultItem }: Props = $props();
 
@@ -114,11 +116,7 @@
 				e.preventDefault();
 				if (highlightedIndex >= 0 && highlightedIndex < results.length) {
 					const item = results[highlightedIndex];
-					// get id from item - assume it has an id property
-					const id = (item as any).id;
-					if (id !== undefined) {
-						handleSelect(item, id);
-					}
+					handleSelect(item, item.id);
 				}
 				break;
 			case 'Escape':

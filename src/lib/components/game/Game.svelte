@@ -1,16 +1,16 @@
-<script lang="ts">
+<script lang="ts" generics="TItem">
 	import TurnTimer from './TurnTimer.svelte';
 	import ChainDisplay from './ChainDisplay.svelte';
 	import type { GameSession } from '$lib/types/game';
 	import { onMount } from 'svelte';
 
-	type Props = {
-		session: GameSession;
-	};
+	interface Props {
+		session: GameSession<TItem>;
+	}
 
 	const { session: initialSession }: Props = $props();
 
-	let session = $state<GameSession>(initialSession);
+	let session = $state<GameSession<TItem>>(initialSession);
 	let isInitialized = $state(false);
 
 	// get search component from mode
@@ -25,7 +25,7 @@
 		}
 	});
 
-	function handleSelect(selected: any) {
+	function handleSelect(selected: TItem) {
 		const result = session.mode.tryAddRound(session.details, selected, session.settings);
 		if (result.success) {
 			if (session.mode.isGameOver(session.details)) {

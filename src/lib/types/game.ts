@@ -1,7 +1,9 @@
+import type { Component } from 'svelte';
+
 // game data types
 
-export interface GameSession {
-    mode: GameMode,
+export interface GameSession<TItem = any> {
+    mode: GameMode<TItem>,
     settings: GameSettings,
     details: GameDetails
 }
@@ -37,12 +39,11 @@ export interface GameMode<TItem = any> {
     name: string,
     description: string,
     defaultSettings: GameSettings,
-    startGame: (gameDetails: GameDetails, settings?: GameSettings) => TryAddRoundResult | Promise<TryAddRoundResult>, // initialize the game
+    startGame: (gameDetails: GameDetails, settings?: GameSettings) => TryAddRoundResult | Promise<TryAddRoundResult>,
     tryAddRound: (gameDetails: GameDetails, newItem: TItem, settings?: GameSettings) => TryAddRoundResult,
     isGameOver: (gameDetails: GameDetails) => boolean,
-    // ui components
-    searchComponent: any, // svelte component
-    chainElementComponent: any, // svelte component
+    searchComponent: Component<{ onSelect: (item: TItem) => void; disabled?: boolean }>,
+    chainElementComponent: Component<{ round: GameRound }>,
 }
 
 export type ModeRegistry = {

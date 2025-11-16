@@ -3,10 +3,10 @@
 	import type { Anime } from '$lib/types/game';
 	import { searchAnime, fetchAnime } from '$lib/api/anime';
 
-	type Props = {
+	interface Props {
 		onSelect: (anime: Anime) => void;
 		disabled?: boolean;
-	};
+	}
 
 	const { onSelect, disabled = false }: Props = $props();
 

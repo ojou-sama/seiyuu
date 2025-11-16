@@ -1,10 +1,10 @@
-<script lang="ts">
+<script lang="ts" generics="TItem">
 	import type { GameSession } from "$lib/types/game";
 	import ChainLink from "./ChainLink.svelte";
 
-	type Props = {
-		session: GameSession;
-	};
+	interface Props {
+		session: GameSession<TItem>;
+	}
 
 	const { session }: Props = $props();
 
