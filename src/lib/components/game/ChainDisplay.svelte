@@ -1,20 +1,21 @@
 <script lang="ts">
-	import type { GameRound } from "$lib/types/game";
-	import type { Snippet } from 'svelte';
+	import type { GameSession } from "$lib/types/game";
 	import ChainLink from "./ChainLink.svelte";
 
 	type Props = {
-		rounds: GameRound[];
-		chainElement: Snippet<[GameRound]>;
+		session: GameSession;
 	};
 
-	const { rounds, chainElement }: Props = $props();
+	const { session }: Props = $props();
+
+	// get chain element component from mode
+	const ChainElementComponent = session.mode.chainElementComponent;
 </script>
 
 <div class="chain-display">
-	{#each rounds.slice().reverse() as round, index}
-		{@render chainElement(round)}
-		{#if index < rounds.length - 1}
+	{#each session.details.rounds.slice().reverse() as round, index}
+		<ChainElementComponent {round} />
+		{#if index < session.details.rounds.length - 1}
 			<ChainLink {round} />
 		{/if}
 	{/each}

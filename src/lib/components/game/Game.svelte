@@ -2,7 +2,6 @@
 	import TurnTimer from './TurnTimer.svelte';
 	import ChainDisplay from './ChainDisplay.svelte';
 	import type { GameSession } from '$lib/types/game';
-	import { searchAnime, fetchAnime } from '$lib/api/anime';
 	import { onMount } from 'svelte';
 
 	type Props = {
@@ -14,9 +13,8 @@
 	let session = $state<GameSession>(initialSession);
 	let isInitialized = $state(false);
 
-	// get components from mode
+	// get search component from mode
 	const SearchComponent = session.mode.searchComponent;
-	const ChainElementComponent = session.mode.chainElementComponent;
 
 	onMount(async () => {
 		const result = await session.mode.startGame(session.details, session.settings);
@@ -62,8 +60,6 @@
 		<SearchComponent 
 			onSelect={handleSelect} 
 			disabled={!isGameActive}
-			searchFunction={searchAnime}
-			fetchItemFunction={fetchAnime}
 		/>
 		{#if session.settings.timePerTurn}
 			<TurnTimer
@@ -75,11 +71,7 @@
 		{/if}
 	</div>
 	<div class="game-content">
-		<ChainDisplay rounds={session.details.rounds}>
-			{#snippet chainElement(round)}
-				<ChainElementComponent {round} />
-			{/snippet}
-		</ChainDisplay>
+		<ChainDisplay {session} />
 	</div>
 </div>
 

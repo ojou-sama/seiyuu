@@ -1,46 +1,22 @@
 <script lang="ts">
-    import type { GameRound } from "$lib/types/game";
+	import type { GameRound } from "$lib/types/game";
+	import type { Snippet } from 'svelte';
 
-    type Props = {
-        round: GameRound;
-    };
+	type Props = {
+		round: GameRound;
+		content: Snippet; // mode-specific content
+	};
 
-    const { round }: Props = $props();
+	const { round, content }: Props = $props();
 </script>
 
 <div class="chain-element">
-    <p>Round {round.number}</p>
-    <div class="chain-card">
-        {#if round.anime.coverImage}
-            <img src={round.anime.coverImage} alt={round.anime.title} />
-        {/if}
-        <div>
-            <h3>{round.anime.title}</h3>
-        </div>
-    </div>
+	<p>Round {round.number}</p>
+	{@render content()}
 </div>
 
 <style>
-    .chain-element {
-        width: min(520px, 100%);
-    }
-    
-    .chain-card {
-        padding: 1em;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        display: flex;
-        flex-direction: row;
-        gap: 1em;
-    }
-
-    .chain-card img {
-        max-height: 140px;
-        height: auto;
-    }
-
-    h3 {
-        margin: 0;
-    }
+	.chain-element {
+		width: min(520px, 100%);
+	}
 </style>
-
