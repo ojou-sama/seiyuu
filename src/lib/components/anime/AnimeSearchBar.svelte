@@ -21,52 +21,20 @@
 	searchFunction={searchAnime}
 	fetchItemFunction={fetchAnime}
 >
-	{#snippet resultItem(anime: Anime, index: number, isHighlighted: boolean, handleSelect)}
+	{#snippet resultItem(anime: Anime, index: number, isHighlighted: boolean, handleSelect, setHighlightedIndex)}
 		<button
 			type="button"
-			class="item"
-			class:highlighted={isHighlighted}
+			class="w-full p-3 cursor-pointer border-0 border-b border-gray-100 text-left text-base last:border-b-0"
+			class:bg-gray-100={isHighlighted}
+			class:bg-white={!isHighlighted}
+			class:hover:bg-gray-50={!isHighlighted}
 			onclick={() => handleSelect(anime, anime.id)}
+			onmouseenter={() => setHighlightedIndex(index)}
 		>
-			<div class="title">{anime.title}</div>
+			<div class="font-medium">{anime.title}</div>
 			{#if getEnglishTitle(anime)}
-				<div class="subtitle">{getEnglishTitle(anime)}</div>
+				<div class="text-sm text-gray-600 mt-0.5">{getEnglishTitle(anime)}</div>
 			{/if}
 		</button>
 	{/snippet}
 </SearchBar>
-
-<style>
-	.item {
-		width: 100%;
-		padding: 12px;
-		cursor: pointer;
-		border: none;
-		border-bottom: 1px solid #f0f0f0;
-		background: white;
-		text-align: left;
-		font-size: 1rem;
-	}
-
-	.item:last-child {
-		border-bottom: none;
-	}
-
-	.item:hover {
-		background: #f5f5f5;
-	}
-
-	.item.highlighted {
-		background: #f5f5f5;
-	}
-
-	.title {
-		font-weight: 500;
-	}
-
-	.subtitle {
-		font-size: 0.875rem;
-		color: #666;
-		margin-top: 2px;
-	}
-</style>

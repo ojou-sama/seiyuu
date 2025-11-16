@@ -55,8 +55,8 @@
 	const isGameActive = $derived(isInitialized && !session.details.isOver);
 </script>
 
-<div class="game-container">
-	<div class="game-actions">
+<div class="flex flex-col items-center w-[800px] p-6 mt-4 min-h-screen bg-[rgb(255,248,239)]">
+	<div class="flex flex-row gap-4 w-full">
 		<SearchComponent 
 			onSelect={handleSelect} 
 			disabled={!isGameActive}
@@ -70,31 +70,7 @@
 			/>
 		{/if}
 	</div>
-	<div class="game-content">
+	<div class="py-16 pb-4">
 		<ChainDisplay {session} />
 	</div>
 </div>
-
-<style>
-	.game-container {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		width: 800px;
-		padding: 24px;
-		margin-top: 16px;
-		min-height: 100vh;
-		background-color: rgb(255, 248, 239);
-	}
-
-	.game-actions {
-		display: flex;
-		flex-direction: row;
-		gap: 1rem;
-		width: 100%;
-	}
-
-	.game-content {
-		padding: 4em 0 1em 0;
-	}
-</style>

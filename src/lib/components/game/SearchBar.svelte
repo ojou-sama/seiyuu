@@ -9,7 +9,7 @@
 		disabled?: boolean;
 		searchFunction: (query: string) => Promise<TItem[]>;
 		fetchItemFunction: (id: number | string) => Promise<TItem>;
-		resultItem: Snippet<[TItem, number, boolean, SelectHandler]>;
+		resultItem: Snippet<[TItem, number, boolean, SelectHandler, (index: number) => void]>;
 	}
 
 	const { onSelect, disabled = false, searchFunction, fetchItemFunction, resultItem }: Props = $props();
@@ -138,90 +138,33 @@
 
 <svelte:window onclick={handleClickOutside} />
 
-<div class="searchbar" bind:this={containerEl}>
-	<div class="input-wrapper">
-		<Search class="search-icon" size={20} />
+<div class="relative w-full" bind:this={containerEl}>
+	<div class="relative flex items-center">
+		<Search class="absolute left-2.5 text-gray-400 pointer-events-none" size={20} />
 		<input
 			bind:value={inputValue}
 			onkeydown={handleKeydown}
 			placeholder="Search..."
 			autocomplete="off"
 			disabled={disabled}
+			class="w-full py-2 pl-9 pr-2 border border-gray-300 rounded focus:outline-none focus:border-gray-600 text-base"
 		/>
 	</div>
 	{#if isOpen}
-		<div class="menu">
+		<div class="absolute top-[calc(100%+4px)] left-0 right-0 bg-white border border-gray-300 rounded max-h-[300px] overflow-y-auto shadow-md z-10">
 			{#if isLoading}
-				<div class="message">Loading...</div>
+				<div class="p-4 text-center text-gray-400">Loading...</div>
 			{:else if hasError}
-				<div class="message error">
+				<div class="p-4 text-center text-red-700">
 					Rate limit reached. Please wait a moment and try again.
 				</div>
 			{:else if results.length === 0}
-				<div class="message">No results found</div>
+				<div class="p-4 text-center text-gray-400">No results found</div>
 			{:else}
 				{#each results as item, index}
-					{@render resultItem(item, index, index === highlightedIndex, handleSelect)}
+					{@render resultItem(item, index, index === highlightedIndex, handleSelect, (idx) => highlightedIndex = idx)}
 				{/each}
 			{/if}
 		</div>
 	{/if}
 </div>
-
-<style>
-    .searchbar {
-        position: relative;
-        width: 100%;
-    }
-
-    .input-wrapper {
-        position: relative;
-        display: flex;
-        align-items: center;
-    }
-
-    .input-wrapper :global(.search-icon) {
-        position: absolute;
-        left: 10px;
-        color: #999;
-        pointer-events: none;
-    }
-
-    input {
-        width: 100%;
-        padding: 8px 8px 8px 36px;
-        box-sizing: border-box;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        font-size: 1rem;
-    }
-
-    input:focus {
-        outline: none;
-        border-color: #666;
-    }
-
-    .menu {
-        position: absolute;
-        top: calc(100% + 4px);
-        left: 0;
-        right: 0;
-        background: white;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        max-height: 300px;
-        overflow-y: auto;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        z-index: 10;
-    }
-
-    .message {
-        padding: 16px;
-        text-align: center;
-        color: #999;
-    }
-
-    .message.error {
-        color: #d32f2f;
-    }
-</style>

@@ -16,14 +16,6 @@
 	};
 </script>
 
-<div class="container">
+<div class="flex justify-center items-center">
 	<Game {session} />
 </div>
-
-<style>
-	.container {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-	}
-</style>

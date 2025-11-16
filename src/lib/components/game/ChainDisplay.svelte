@@ -12,7 +12,7 @@
 	const ChainElementComponent = session.mode.chainElementComponent;
 </script>
 
-<div class="chain-display">
+<div class="flex flex-col items-center w-full">
 	{#each session.details.rounds.slice().reverse() as round, index}
 		<ChainElementComponent {round} />
 		{#if index < session.details.rounds.length - 1}
@@ -20,12 +20,3 @@
 		{/if}
 	{/each}
 </div>
-
-<style>
-	.chain-display {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		width: 100%;
-	}
-</style>

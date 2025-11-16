@@ -10,13 +10,7 @@
 	const { round, content }: Props = $props();
 </script>
 
-<div class="chain-element">
+<div class="w-full max-w-[520px]">
 	<p>Round {round.number}</p>
 	{@render content()}
 </div>
-
-<style>
-	.chain-element {
-		width: min(520px, 100%);
-	}
-</style>

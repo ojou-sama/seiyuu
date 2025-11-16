@@ -44,37 +44,18 @@
 	}
 </script>
 
-<div class="turn-timer" class:warning={timeRemaining <= 10} class:disabled>
-	<div class="timer-value">{formatTime(timeRemaining)}</div>
+<div 
+	class="flex items-center gap-2 px-4 py-2 rounded text-sm"
+	class:bg-gray-100={timeRemaining > 10}
+	class:bg-red-50={timeRemaining <= 10}
+	class:opacity-50={disabled}
+	class:pointer-events-none={disabled}
+>
+	<div 
+		class="font-bold text-xl"
+		class:text-gray-800={timeRemaining > 10}
+		class:text-red-700={timeRemaining <= 10}
+	>
+		{formatTime(timeRemaining)}
+	</div>
 </div>
-
-<style>
-	.turn-timer {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		padding: 0.5rem 1rem;
-		background: #f5f5f5;
-		border-radius: 4px;
-		font-size: 0.9rem;
-	}
-
-	.timer-value {
-		font-weight: 700;
-		font-size: 1.2rem;
-		color: #333;
-	}
-
-	.turn-timer.warning {
-		background: #ffebee;
-	}
-
-	.turn-timer.warning .timer-value {
-		color: #d32f2f;
-	}
-
-	.turn-timer.disabled {
-		opacity: 0.5;
-		pointer-events: none;
-	}
-</style>
