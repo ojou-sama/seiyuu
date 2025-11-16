@@ -1,13 +1,22 @@
 // game data types
 
+export interface GameSession {
+    mode: GameMode,
+    settings: GameSettings,
+    details: GameDetails
+}
+
+export interface GameSettings {
+    maxStaffUsage?: number, // max staff usage allowed (undefined = unlimited)
+    timePerTurn?: number // time limit per turn in seconds (undefined = no limit)
+}
+
 export interface GameDetails {
     startTime: number,
     endTime?: number,
     isOver: boolean,
-    mode: GameMode,
     rounds: GameRound[],
     overallStaffUsage: Map<number, number>,
-    settings: GameSettings // player-configured settings for this game
 }
 
 export interface GameRound {
@@ -24,17 +33,12 @@ export type TryAddRoundResult =
     | { success: true; round: GameRound }
     | { success: false; error: string };
 
-export interface GameSettings {
-    maxStaffUsage?: number, // max staff usage allowed (undefined = unlimited)
-    timePerTurn?: number // time limit per turn in seconds (undefined = no limit)
-}
-
 export interface GameMode {
     name: string,
     description: string,
-    defaultSettings: GameSettings, // default/recommended settings for this mode
-    startGame: (gameDetails: GameDetails) => TryAddRoundResult | Promise<TryAddRoundResult>, // initialize the game
-    tryAddRound: (gameDetails: GameDetails, newAnime: Anime) => TryAddRoundResult,
+    defaultSettings: GameSettings,
+    startGame: (gameDetails: GameDetails, settings?: GameSettings) => TryAddRoundResult | Promise<TryAddRoundResult>, // initialize the game
+    tryAddRound: (gameDetails: GameDetails, newAnime: Anime, settings?: GameSettings) => TryAddRoundResult,
     isGameOver: (gameDetails: GameDetails) => boolean,
     ui?: Record<string, unknown>,
 }

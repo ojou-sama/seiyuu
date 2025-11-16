@@ -2,28 +2,20 @@
 	import SearchBar from './SearchBar.svelte';
 	import ChainDisplay from './ChainDisplay.svelte';
 	import TurnTimer from './TurnTimer.svelte';
-	import type { Anime, GameDetails, GameMode } from '$lib/types/game';
+	import type { Anime, GameSession } from '$lib/types/game';
 	import { onMount } from 'svelte';
 
 	type Props = {
-		mode: GameMode;
+		session: GameSession;
 	};
 
-	const { mode }: Props = $props();
+	const { session: initialSession }: Props = $props();
 
+	let session = $state<GameSession>(initialSession);
 	let isInitialized = $state(false);
 
-	let details = $state<GameDetails>({
-		startTime: Date.now(),
-		isOver: false,
-		mode,
-		rounds: [],
-		overallStaffUsage: new Map<number, number>(),
-		settings: mode.defaultSettings
-	});
-
 	onMount(async () => {
-		const result = await mode.startGame(details);
+		const result = await session.mode.startGame(session.details, session.settings);
 		if (!result.success) {
 			console.error('Failed to start game:', result.error);
 		} else {
@@ -32,11 +24,11 @@
 	});
 
 	function handleSelect(selected: Anime) {
-		const result = mode.tryAddRound(details, selected);
+		const result = session.mode.tryAddRound(session.details, selected, session.settings);
 		if (result.success) {
-			if (mode.isGameOver(details)) {
-				details.isOver = true;
-				details.endTime = Date.now();
+			if (session.mode.isGameOver(session.details)) {
+				session.details.isOver = true;
+				session.details.endTime = Date.now();
 				alert('Game is over! You win!');
 			}
 		} else {
@@ -45,28 +37,28 @@
 	}
 
 	function handleTimeUp() {
-		if (!details.isOver) {
-			details.isOver = true;
-			details.endTime = Date.now();
+		if (!session.details.isOver) {
+			session.details.isOver = true;
+			session.details.endTime = Date.now();
 			alert('Time is up! Game over.');
 		}
 	}
 
 	// get the last round's timestamp for timer
 	const lastRoundTime = $derived(
-		details.rounds.length > 0 ? details.rounds[details.rounds.length - 1].timestamp : details.startTime
+		session.details.rounds.length > 0 ? session.details.rounds[session.details.rounds.length - 1].timestamp : session.details.startTime
 	);
 
 	// only show timer when game is active (initialized and not over)
-	const isGameActive = $derived(isInitialized && !details.isOver);
+	const isGameActive = $derived(isInitialized && !session.details.isOver);
 </script>
 
 <div class="game-container">
 	<div class="game-actions">
 		<SearchBar onSelect={handleSelect} disabled={!isGameActive} />
-		{#if details.settings.timePerTurn}
+		{#if session.settings.timePerTurn}
 			<TurnTimer
-				timeLimit={details.settings.timePerTurn}
+				timeLimit={session.settings.timePerTurn}
 				startTime={lastRoundTime}
 				onTimeUp={handleTimeUp}
 				disabled={!isGameActive}
@@ -74,7 +66,7 @@
 		{/if}
 	</div>
 	<div class="game-content">
-		<ChainDisplay rounds={details.rounds} />
+		<ChainDisplay rounds={session.details.rounds} />
 	</div>
 </div>
 

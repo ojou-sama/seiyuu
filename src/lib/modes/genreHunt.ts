@@ -1,4 +1,4 @@
-import type { Anime, GameDetails, GameMode, GameRound, Staff, TryAddRoundResult } from '$lib/types/game';
+import type { Anime, GameDetails, GameMode, GameRound, GameSettings, Staff, TryAddRoundResult } from '$lib/types/game';
 import { fetchRandomTopAnime } from '$lib/utils/mal';
 
 const NAME = 'Genre Hunt';
@@ -56,7 +56,9 @@ function createRound(
     };
 }
 
-const tryAddRound = (details: GameDetails, newAnime: Anime): TryAddRoundResult => {
+const tryAddRound = (details: GameDetails, newAnime: Anime, settings: GameSettings = {}): TryAddRoundResult => {
+    const maxStaffUsage = settings.maxStaffUsage ?? MAX_STAFF_USAGE;
+
     // Reject if anime already played
     if (details.rounds.some(round => round.anime.id === newAnime.id)) {
         return { success: false, error: `"${newAnime.title}" has already been played!` };
@@ -90,7 +92,7 @@ const tryAddRound = (details: GameDetails, newAnime: Anime): TryAddRoundResult =
     // Check if any overlapping staff have been used 3+ times
     const overusedStaff = allOverlapping.filter(s => {
         const usageCount = details.overallStaffUsage.get(s.id) ?? 0;
-        return usageCount >= (details.settings.maxStaffUsage ?? 0);
+        return usageCount >= maxStaffUsage;
     });
     
     if (overusedStaff.length > 0) {
@@ -106,7 +108,7 @@ const tryAddRound = (details: GameDetails, newAnime: Anime): TryAddRoundResult =
         lastAnime,
         newAnime,
         details.overallStaffUsage,
-        details.settings.maxStaffUsage ?? 0
+        maxStaffUsage
     );
     
     if (staffUsed.length === 0) {
@@ -126,13 +128,13 @@ const tryAddRound = (details: GameDetails, newAnime: Anime): TryAddRoundResult =
     return { success: true, round: newRound };
 }
 
-const startGame = (details: GameDetails): Promise<TryAddRoundResult> => {
+const startGame = (details: GameDetails, settings?: GameSettings): Promise<TryAddRoundResult> => {
     return fetchRandomTopAnime(100)
         .then(startAnime => {
             if (!startAnime) {
                 return { success: false, error: 'Failed to select a starting anime.' } as const;
             }
-            return tryAddRound(details, startAnime);
+            return tryAddRound(details, startAnime, settings);
         })
         .catch(err => {
             const msg = err instanceof Error ? err.message : String(err);
