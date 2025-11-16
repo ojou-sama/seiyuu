@@ -33,14 +33,16 @@ export type TryAddRoundResult =
     | { success: true; round: GameRound }
     | { success: false; error: string };
 
-export interface GameMode {
+export interface GameMode<TItem = any> {
     name: string,
     description: string,
     defaultSettings: GameSettings,
     startGame: (gameDetails: GameDetails, settings?: GameSettings) => TryAddRoundResult | Promise<TryAddRoundResult>, // initialize the game
-    tryAddRound: (gameDetails: GameDetails, newAnime: Anime, settings?: GameSettings) => TryAddRoundResult,
+    tryAddRound: (gameDetails: GameDetails, newItem: TItem, settings?: GameSettings) => TryAddRoundResult,
     isGameOver: (gameDetails: GameDetails) => boolean,
-    ui?: Record<string, unknown>,
+    // ui components
+    searchComponent: any, // svelte component
+    chainElementComponent: any, // svelte component
 }
 
 export type ModeRegistry = {
